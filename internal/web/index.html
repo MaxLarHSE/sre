@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trade for All</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --surface: #ffffff;
+    --surface-2: #f0f2f5;
+    --text: #1b1f24;
+    --muted: #5d6673;
+    --border: #dde1e6;
+    --accent: #2f6fde;
+    --accent-text: #ffffff;
+    --ok: #1e8a4c;
+    --ok-bg: #e5f5ec;
+    --warn: #a35d00;
+    --warn-bg: #fff2df;
+    --err: #c0362c;
+    --err-bg: #fdebea;
+    --radius: 10px;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .06);
+    --mono: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111418;
+      --surface: #1a1e24;
+      --surface-2: #232830;
+      --text: #e6e9ed;
+      --muted: #98a1ad;
+      --border: #2e343d;
+      --accent: #5b8ff0;
+      --accent-text: #0d1117;
+      --ok: #4cc37f;
+      --ok-bg: #16301f;
+      --warn: #e2a24a;
+      --warn-bg: #33270f;
+      --err: #f07167;
+      --err-bg: #3a1a18;
+      --shadow: none;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  h1, h2 { margin: 0; font-weight: 600; }
+  h1 { font-size: 18px; }
+  h2 { font-size: 15px; margin-bottom: 12px; }
+
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .brand small { display: block; color: var(--muted); font-size: 12px; }
+  .identity { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+  .who { color: var(--muted); font-size: 13px; }
+  .who b { color: var(--text); font-weight: 600; margin-left: 4px; overflow-wrap: anywhere; }
+
+  .login { max-width: 420px; margin: 48px auto; }
+  .login p { margin: 0 0 14px; color: var(--muted); }
+  .login .hint { margin: 14px 0 0; font-size: 12px; }
+  @media (max-width: 480px) { .login { margin: 16px; } }
+
+  [hidden] { display: none !important; }
+
+  main {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+  @media (max-width: 860px) { main { grid-template-columns: minmax(0, 1fr); } }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px;
+    min-width: 0;
+  }
+  .side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+  label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); min-width: 0; }
+  label > input, label > select { width: 100%; }
+  input, select {
+    font: inherit;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 10px;
+    min-width: 0;
+  }
+  input:focus, select:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  button {
+    font: inherit;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 7px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  button:hover { filter: brightness(.97); }
+  button:disabled { opacity: .5; cursor: default; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+  button.danger { color: var(--err); }
+  button.link { background: none; border: none; color: var(--accent); padding: 0; }
+
+  .filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 14px; }
+  .filters label { flex: 1 1 140px; }
+
+  .listings { display: flex; flex-direction: column; gap: 8px; }
+  .listing {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px 12px;
+    align-items: center;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+  }
+  .listing.mine { border-color: var(--accent); }
+  .listing .item { font-weight: 600; overflow-wrap: anywhere; }
+  .listing .meta { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+  .listing .price { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .listing .actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
+  @media (max-width: 520px) {
+    .listing { grid-template-columns: minmax(0, 1fr); }
+    .listing .actions { justify-content: flex-start; }
+  }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 1px 6px;
+    border-radius: 99px;
+    background: var(--surface-2);
+    color: var(--muted);
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .empty { color: var(--muted); padding: 20px 0; text-align: center; }
+  .more { margin-top: 12px; text-align: center; }
+
+  form.stack { display: flex; flex-direction: column; gap: 10px; }
+  .row { display: flex; gap: 10px; }
+  .row > label { flex: 1; }
+
+  .log-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .log-head h2 { margin: 0; }
+  .log { display: flex; flex-direction: column; gap: 8px; max-height: 520px; overflow: auto; }
+  .entry { border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
+  .entry summary {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 6px 10px;
+    cursor: pointer;
+    list-style: none;
+  }
+  .entry summary::-webkit-details-marker { display: none; }
+  .entry .path { font-family: var(--mono); overflow-wrap: anywhere; flex: 1; }
+  .entry .ms { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .entry .body { padding: 0 10px 10px; }
+  .entry .k { color: var(--muted); font-size: 12px; margin-top: 6px; }
+  pre {
+    margin: 2px 0 0;
+    padding: 8px;
+    background: var(--surface-2);
+    border-radius: 6px;
+    font: 12px/1.4 var(--mono);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .status { font-family: var(--mono); font-weight: 600; padding: 0 6px; border-radius: 4px; }
+  .s2 { color: var(--ok); background: var(--ok-bg); }
+  .s4 { color: var(--warn); background: var(--warn-bg); }
+  .s5, .s0 { color: var(--err); background: var(--err-bg); }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 16px;
+    transform: translateX(-50%);
+    max-width: calc(100% - 32px);
+    padding: 10px 14px;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .18);
+    font-size: 14px;
+    z-index: 10;
+  }
+  .toast.ok { background: var(--ok-bg); color: var(--ok); border: 1px solid var(--ok); }
+  .toast.err { background: var(--err-bg); color: var(--err); border: 1px solid var(--err); }
+
+  dialog {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    padding: 16px;
+    width: min(360px, calc(100% - 32px));
+  }
+  dialog::backdrop { background: rgba(0, 0, 0, .4); }
+  dialog p { margin: 0 0 12px; color: var(--muted); }
+  .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+
+  footer { max-width: 1200px; margin: 0 auto; padding: 0 16px 24px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <h1>Trade for All</h1>
+    <small>Демо-клиент торговой площадки</small>
+  </div>
+  <div class="identity" id="identity" hidden>
+    <span class="who">Игра <b id="who-game"></b></span>
+    <span class="who">Игрок <b id="who-player"></b></span>
+    <button id="logout">Сменить игрока</button>
+  </div>
+</header>
+
+<section class="card login" id="login" hidden>
+  <h2>Вход</h2>
+  <p>Выберите игру и введите имя игрока. Все ваши лоты и покупки будут привязаны к этому имени.</p>
+  <form class="stack" id="login-form">
+    <label>Игра
+      <select name="game" id="login-game"></select>
+    </label>
+    <label>Имя игрока
+      <input name="player" required maxlength="64" list="players" autocomplete="off" spellcheck="false" placeholder="например, vasya">
+      <datalist id="players"></datalist>
+    </label>
+    <button type="submit" class="primary">Войти</button>
+  </form>
+  <p class="hint">Имя запоминается только в этой вкладке: в соседней можно войти другим игроком и купить у себя же.</p>
+</section>
+
+<main id="app" hidden>
+  <section class="card">
+    <h2>Витрина</h2>
+    <form class="filters" id="filters">
+      <label>Предмет
+        <input name="item_code" placeholder="iron_sword" autocomplete="off" spellcheck="false">
+      </label>
+      <label>Продавец
+        <input name="seller_id" placeholder="любой" autocomplete="off" spellcheck="false">
+      </label>
+      <label style="flex: 0 0 90px">На странице
+        <select name="limit">
+          <option>5</option>
+          <option selected>10</option>
+          <option>20</option>
+        </select>
+      </label>
+      <button type="button" id="only-mine">Мои лоты</button>
+      <button type="submit" class="primary">Показать</button>
+    </form>
+    <div class="listings" id="listings"></div>
+    <div class="more"><button id="load-more" hidden>Загрузить ещё</button></div>
+  </section>
+
+  <div class="side">
+    <section class="card">
+      <h2>Выставить лот</h2>
+      <form class="stack" id="create">
+        <label>Предмет
+          <input name="item_code" required maxlength="64" placeholder="wolf_pelt" autocomplete="off" spellcheck="false">
+        </label>
+        <div class="row">
+          <label>Количество
+            <input name="quantity" type="number" min="1" step="1" value="1" required>
+          </label>
+          <label>Цена
+            <input name="price" type="number" min="1" step="1" value="100" required>
+          </label>
+        </div>
+        <button type="submit" class="primary">Выставить</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="log-head">
+        <h2>Журнал запросов</h2>
+        <button id="replay" disabled title="Отправить последний изменяющий запрос ещё раз с тем же Idempotency-Key">Повторить запрос</button>
+      </div>
+      <div class="log" id="log"><div class="empty">Запросов пока не было</div></div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  В демо страница обращается к API напрямую. В настоящей игре API-ключ хранится только на сервере игры,
+  а клиент игрока ходит к нему, а не к Trade for All.
+</footer>
+
+<dialog id="price-dialog">
+  <form method="dialog" id="price-form">
+    <h2>Изменить цену</h2>
+    <p id="price-dialog-item"></p>
+    <label>Новая цена
+      <input name="price" type="number" min="1" step="1" required>
+    </label>
+    <div class="dialog-actions">
+      <button value="cancel" formnovalidate>Отмена</button>
+      <button value="ok" class="primary">Сохранить</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+"use strict";
+
+// Игры из сидов. API-ключ определяет игру: в настоящей схеме его знает только сервер игры.
+const GAMES = {
+  survival: { name: "Demo Survival", apiKey: "demo-survival-key", players: ["vasya", "petya", "masha"] },
+  rpg: { name: "Demo RPG", apiKey: "demo-rpg-key", players: ["arthas", "jaina", "thrall"] },
+};
+
+const ERROR_TEXT = {
+  unauthorized: "Игра не найдена (неверный API-ключ)",
+  validation_error: "Некорректные данные",
+  not_found: "Лот не найден",
+  not_owner: "Это не ваш лот",
+  listing_not_active: "Лот уже продан или снят",
+  own_listing: "Нельзя купить свой лот",
+  price_mismatch: "Цена изменилась, обновите витрину",
+  idempotency_key_reused: "Ключ идемпотентности уже использован для другого запроса",
+  internal_error: "Ошибка сервера",
+};
+
+const $ = (id) => document.getElementById(id);
+const state = { game: null, player: null, cursor: null, filters: {}, lastMutation: null };
+
+// --- вход хранится в sessionStorage: у каждой вкладки свой игрок ---
+const session = {
+  get(k) { try { return sessionStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { sessionStorage.setItem(k, v); } catch { /* без сохранения */ } },
+  clear() { try { sessionStorage.clear(); } catch { /* нечего чистить */ } },
+};
+
+// --- идентичность ---
+function apiKey() { return GAMES[state.game].apiKey; }
+function player() { return state.player; }
+
+function fillPlayerHints() {
+  const list = GAMES[$("login-game").value].players;
+  $("players").replaceChildren(...list.map((p) => Object.assign(document.createElement("option"), { value: p })));
+}
+
+function login(game, name) {
+  state.game = game;
+  state.player = name;
+  session.set("game", game);
+  session.set("player", name);
+
+  $("who-game").textContent = GAMES[game].name;
+  $("who-player").textContent = name;
+  $("identity").hidden = false;
+  $("login").hidden = true;
+  $("app").hidden = false;
+
+  $("filters").reset();
+  $("log").replaceChildren(emptyNode("Запросов пока не было"));
+  state.lastMutation = null;
+  $("replay").disabled = true;
+  refresh();
+}
+
+function logout() {
+  session.clear();
+  state.game = state.player = null;
+  $("identity").hidden = true;
+  $("app").hidden = true;
+  $("login").hidden = false;
+  $("login-form").elements.player.value = "";
+  $("login-form").elements.player.focus();
+}
+
+// --- ключ идемпотентности: randomUUID есть только в secure context ---
+function newKey() {
+  if (crypto.randomUUID) return crypto.randomUUID();
+  const b = crypto.getRandomValues(new Uint8Array(16));
+  b[6] = (b[6] & 0x0f) | 0x40;
+  b[8] = (b[8] & 0x3f) | 0x80;
+  const h = [...b].map((x) => x.toString(16).padStart(2, "0")).join("");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
+
+// --- API ---
+class ApiError extends Error {
+  constructor(status, body) {
+    const code = body?.error?.code || "network_error";
+    super(ERROR_TEXT[code] || body?.error?.message || "Сервис недоступен");
+    this.status = status;
+    this.code = code;
+    this.detail = body?.error?.message;
+  }
+}
+
+async function api(method, path, body, idemKey) {
+  const headers = { "X-API-Key": apiKey() };
+  if (body) headers["Content-Type"] = "application/json";
+  if (idemKey) headers["Idempotency-Key"] = idemKey;
+
+  const started = performance.now();
+  let status = 0;
+  let data = null;
+  try {
+    const res = await fetch(path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    status = res.status;
+    const text = await res.text();
+    data = text ? JSON.parse(text) : null;
+  } catch (e) {
+    data = { error: { code: "network_error", message: String(e) } };
+  }
+  logEntry({ method, path, body, idemKey, status, data, ms: Math.round(performance.now() - started) });
+
+  if (status < 200 || status >= 300) throw new ApiError(status, data);
+  return data;
+}
+
+// изменяющий запрос: новый ключ, запоминаем для повтора
+function mutate(method, path, body) {
+  const req = { method, path, body, idemKey: newKey() };
+  state.lastMutation = req;
+  $("replay").disabled = false;
+  return api(req.method, req.path, req.body, req.idemKey);
+}
+
+// --- витрина ---
+async function loadListings(append) {
+  const params = new URLSearchParams();
+  for (const [k, v] of Object.entries(state.filters)) if (v) params.set(k, v);
+  if (append && state.cursor) params.set("cursor", state.cursor);
+
+  try {
+    const page = await api("GET", "/v1/listings?" + params);
+    renderListings(page.items, append);
+    state.cursor = page.next_cursor;
+    $("load-more").hidden = !page.next_cursor;
+  } catch (e) {
+    if (!append) $("listings").replaceChildren(emptyNode(e.message));
+    $("load-more").hidden = true;
+  }
+}
+
+function readFilters() {
+  const f = new FormData($("filters"));
+  state.filters = {
+    item_code: f.get("item_code").trim(),
+    seller_id: f.get("seller_id").trim(),
+    limit: f.get("limit"),
+  };
+  state.cursor = null;
+}
+
+function refresh() {
+  readFilters();
+  return loadListings(false);
+}
+
+function emptyNode(text) {
+  return Object.assign(document.createElement("div"), { className: "empty", textContent: text });
+}
+
+function el(tag, props = {}, ...children) {
+  const node = Object.assign(document.createElement(tag), props);
+  node.append(...children);
+  return node;
+}
+
+function renderListings(items, append) {
+  const box = $("listings");
+  if (!append) box.replaceChildren();
+  if (!append && items.length === 0) {
+    box.append(emptyNode("Активных лотов нет"));
+    return;
+  }
+
+  const me = player();
+  for (const l of items) {
+    const mine = l.seller_id === me;
+    const actions = el("div", { className: "actions" });
+    if (mine) {
+      actions.append(
+        el("button", { textContent: "Цена", onclick: () => openPriceDialog(l) }),
+        el("button", { className: "danger", textContent: "Снять", onclick: () => cancelListing(l) }),
+      );
+    } else {
+      actions.append(el("button", { className: "primary", textContent: "Купить", onclick: () => buyListing(l) }));
+    }
+
+    const created = new Date(l.created_at).toLocaleString("ru-RU", { dateStyle: "short", timeStyle: "short" });
+    box.append(el("div", { className: "listing" + (mine ? " mine" : "") },
+      el("div", {},
+        el("div", { className: "item" }, `${l.item_code} × ${l.quantity}`,
+          mine ? el("span", { className: "badge", textContent: "ваш" }) : ""),
+        el("div", { className: "meta", textContent: `#${l.id} · продавец ${l.seller_id} · ${created}` }),
+      ),
+      el("div", { className: "actions" },
+        el("span", { className: "price", textContent: l.price.toLocaleString("ru-RU") }),
+        actions,
+      ),
+    ));
+  }
+}
+
+// --- действия ---
+async function run(action, okMessage) {
+  try {
+    const res = await action();
+    toast(okMessage(res), true);
+    await refresh();
+  } catch (e) {
+    toast(e.detail && e.code === "validation_error" ? `${e.message}: ${e.detail}` : e.message, false);
+    if (e.code === "price_mismatch" || e.code === "listing_not_active") await refresh();
+  }
+}
+
+async function buyListing(l) {
+  if (!confirm(`Купить ${l.item_code} × ${l.quantity} у ${l.seller_id} за ${l.price}?`)) return;
+  await run(
+    () => mutate("POST", `/v1/listings/${l.id}/buy`, { buyer_id: player(), price: l.price }),
+    (r) => `Куплено. Игра выдаёт ${r.buyer_id}: ${r.item.code} × ${r.item.quantity}, начисляет ${r.seller_id}: ${r.amount}`,
+  );
+}
+
+async function cancelListing(l) {
+  if (!confirm(`Снять с продажи ${l.item_code} × ${l.quantity}?`)) return;
+  await run(
+    () => mutate("POST", `/v1/listings/${l.id}/cancel`, { seller_id: player() }),
+    (r) => `Лот снят. Игра возвращает ${r.seller_id}: ${r.item.code} × ${r.item.quantity}`,
+  );
+}
+
+let priceTarget = null;
+function openPriceDialog(l) {
+  priceTarget = l;
+  $("price-dialog-item").textContent = `${l.item_code} × ${l.quantity}, сейчас ${l.price}`;
+  $("price-form").elements.price.value = l.price;
+  $("price-dialog").showModal();
+}
+
+$("price-dialog").addEventListener("close", async () => {
+  if ($("price-dialog").returnValue !== "ok" || !priceTarget) return;
+  const l = priceTarget;
+  const price = Number($("price-form").elements.price.value);
+  priceTarget = null;
+  await run(
+    () => mutate("PATCH", `/v1/listings/${l.id}`, { seller_id: player(), price }),
+    (r) => `Новая цена ${r.item_code}: ${r.price}`,
+  );
+});
+
+$("create").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  await run(
+    () => mutate("POST", "/v1/listings", {
+      seller_id: player(),
+      item_code: f.get("item_code").trim(),
+      quantity: Number(f.get("quantity")),
+      price: Number(f.get("price")),
+    }),
+    (r) => `Выставлен лот #${r.id}: ${r.item_code} × ${r.quantity} за ${r.price}`,
+  );
+});
+
+// повтор показывает идемпотентность: тот же ключ - тот же ответ, операция не выполняется второй раз
+$("replay").addEventListener("click", async () => {
+  const req = state.lastMutation;
+  if (!req) return;
+  try {
+    await api(req.method, req.path, req.body, req.idemKey);
+    toast("Повтор с тем же ключом: получен сохранённый результат, операция не выполнена второй раз", true);
+  } catch (e) {
+    toast(e.message, false);
+  }
+  await refresh();
+});
+
+// --- журнал ---
+function logEntry({ method, path, body, idemKey, status, data, ms }) {
+  const box = $("log");
+  box.querySelector(".empty")?.remove();
+
+  const statusClass = "s" + String(status)[0];
+  const details = el("details", { className: "entry" },
+    el("summary", {},
+      el("span", { className: `status ${statusClass}`, textContent: status || "ERR" }),
+      el("span", { className: "path", textContent: `${method} ${decodeURIComponent(path)}` }),
+      el("span", { className: "ms", textContent: `${ms} мс` }),
+    ),
+  );
+  const inner = el("div", { className: "body" });
+  if (idemKey) inner.append(el("div", { className: "k", textContent: "Idempotency-Key" }), el("pre", { textContent: idemKey }));
+  if (body) inner.append(el("div", { className: "k", textContent: "Запрос" }), el("pre", { textContent: JSON.stringify(body, null, 2) }));
+  inner.append(el("div", { className: "k", textContent: "Ответ" }), el("pre", { textContent: JSON.stringify(data, null, 2) }));
+  details.append(inner);
+
+  box.prepend(details);
+  while (box.children.length > 30) box.lastChild.remove();
+}
+
+// --- уведомления ---
+let toastTimer;
+function toast(text, ok) {
+  document.querySelector(".toast")?.remove();
+  clearTimeout(toastTimer);
+  const node = el("div", { className: "toast " + (ok ? "ok" : "err"), textContent: text, role: "status" });
+  document.body.append(node);
+  toastTimer = setTimeout(() => node.remove(), 5000);
+}
+
+// --- инициализация ---
+$("filters").addEventListener("submit", (e) => { e.preventDefault(); refresh(); });
+$("load-more").addEventListener("click", () => loadListings(true));
+$("only-mine").addEventListener("click", () => {
+  $("filters").elements.seller_id.value = player();
+  refresh();
+});
+
+$("login-game").addEventListener("change", fillPlayerHints);
+$("login-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const name = e.target.elements.player.value.trim();
+  if (!name) {
+    e.target.elements.player.focus();
+    return;
+  }
+  login($("login-game").value, name);
+});
+$("logout").addEventListener("click", logout);
+
+(function init() {
+  $("login-game").replaceChildren(...Object.entries(GAMES).map(([id, g]) =>
+    Object.assign(document.createElement("option"), { value: id, textContent: g.name })));
+
+  const game = session.get("game");
+  const name = session.get("player");
+  if (game in GAMES) $("login-game").value = game;
+  fillPlayerHints();
+
+  if (game in GAMES && name) {
+    login(game, name);
+  } else {
+    $("login").hidden = false;
+    $("login-form").elements.player.focus();
+  }
+})();
+</script>
+</body>
+</html>
