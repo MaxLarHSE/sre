@@ -18,6 +18,8 @@ spec:
     metadata:
       labels:
         app: trade-app
+      annotations:
+        kubectl.kubernetes.io/default-container: trade-app
     spec:
       terminationGracePeriodSeconds: 30
       securityContext:
