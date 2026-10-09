@@ -12,31 +12,37 @@ spec:
       labels:
         app: trade-migrate
     spec:
+      initContainers:
+      - image: postgres:17-alpine
+        imagePullPolicy: IfNotPresent
+        name: wait-for-postgres
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials
+              key: DATABASE_URL
+        command:
+        - /bin/sh
+        - -c
+        - until pg_isready -d "$DATABASE_URL"; do sleep 2; done
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            cpu: 100m
+            memory: 32Mi
       containers:
       - image: trade-migrate:0.1.0
         imagePullPolicy: IfNotPresent
         name: migrate
-        envFrom:
-        - configMapRef:
-            name: trade-app
         env:
-        - name: DB_USER
-          valueFrom:
-            secretKeyRef:
-              name: postgres-credentials
-              key: POSTGRES_USER
-        - name: DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: postgres-credentials
-              key: POSTGRES_PASSWORD
-        - name: DB_NAME
-          valueFrom:
-            secretKeyRef:
-              name: postgres-credentials
-              key: POSTGRES_DB
         - name: DATABASE_URL
-          value: postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials
+              key: DATABASE_URL
         args:
         - -database=$(DATABASE_URL)
         - up

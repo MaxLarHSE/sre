@@ -23,6 +23,35 @@ spec:
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001
+      initContainers:
+      - image: trade-migrate:0.1.0
+        imagePullPolicy: IfNotPresent
+        name: wait-for-migrations
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials
+              key: DATABASE_URL
+        command:
+        - /bin/sh
+        - -c
+        - |
+          latest=$(ls /migrations | grep '\.up\.sql$' | sort | tail -n 1 | cut -d _ -f 1 | sed 's/^0*//')
+          until [ "$(migrate -path=/migrations -database="$DATABASE_URL" version 2>&1)" = "$latest" ]; do
+            echo "waiting for migration $latest"
+            sleep 2
+          done
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            cpu: 100m
+            memory: 32Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
       containers:
       - image: trade-app:0.1.0
         imagePullPolicy: IfNotPresent
@@ -31,23 +60,11 @@ spec:
         - configMapRef:
             name: trade-app
         env:
-        - name: DB_USER
-          valueFrom:
-            secretKeyRef:
-              name: postgres-credentials
-              key: POSTGRES_USER
-        - name: DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: postgres-credentials
-              key: POSTGRES_PASSWORD
-        - name: DB_NAME
-          valueFrom:
-            secretKeyRef:
-              name: postgres-credentials
-              key: POSTGRES_DB
         - name: DATABASE_URL
-          value: postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials
+              key: DATABASE_URL
         ports:
         - containerPort: 8080
           name: http
