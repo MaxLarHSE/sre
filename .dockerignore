@@ -4,3 +4,6 @@
 .env
 *.md
 .agents
+hw1
+hw2
+*.zip
