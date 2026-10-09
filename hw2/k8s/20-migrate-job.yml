@@ -1,0 +1,51 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: trade-migrate
+  namespace: trade
+spec:
+  backoffLimit: 6
+  activeDeadlineSeconds: 300
+  template:
+    metadata:
+      labels:
+        app: trade-migrate
+    spec:
+      containers:
+      - image: trade-migrate:0.1.0
+        imagePullPolicy: IfNotPresent
+        name: migrate
+        envFrom:
+        - configMapRef:
+            name: trade-app
+        env:
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials
+              key: POSTGRES_USER
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials
+              key: POSTGRES_PASSWORD
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials
+              key: POSTGRES_DB
+        - name: DATABASE_URL
+          value: postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
+        args:
+        - -database=$(DATABASE_URL)
+        - up
+        resources:
+          requests:
+            cpu: 50m
+            memory: 32Mi
+          limits:
+            cpu: 200m
+            memory: 64Mi
+      restartPolicy: Never
+...
